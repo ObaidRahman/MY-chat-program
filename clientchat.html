@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Chat Room</title>
+    <style>
+        #chatroom{
+            height: 300px;
+        }
+        #content{
+            display: none;
+        }
+        #mychatroom{
+            float: left;
+        }
+    </style>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    <script src = "http://code.jquery.com/jquery-latest.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+
+</head>
+<body>
+<div id = "roomusers">
+    <p>Enter your Email:</p>
+    <p id = "sameuser"></p>
+    <form id = "setusers">
+        <input size = "35" id = "username"/>
+        <input type = "submit"/>
+
+    </form>
+</div>
+
+<div id = "content">
+    <div id = "mychatroom">
+        <div id = "chatroom"></div>
+        <form id = "send">
+            <input size = "35" id = "message"/>
+            <input type = "submit"/>
+        </form>
+    </div>
+    <div id = "users"></div>
+</div>
+
+
+<script>
+    var socket = io();
+    jQuery(function($){
+
+        var $form = $('#send');
+        var $messages = $('#message');
+        var $chat = $('#chatroom');
+        //var $roomUsers = $('#roomusers');
+        var $sameUsers = $('#sameuser');
+        var $setUsers = $('#setusers');
+        var $usernames =$('#username');
+        var $users = $('#users');
+
+        $setUsers.submit(function(e){
+            e.preventDefault();
+
+            socket.emit('new users', $usernames.val(), function(data){
+                if(data) {
+                    $('#roomusers').hide();
+                    $('#content').show();
+                   // $roomUsers.display(null);
+
+                }
+                else{
+                    $sameUsers.html("The Email ID already exists");
+                }
+
+            });
+            $usernames.val('');
+        });
+
+        socket.on('allusers', function(data){
+           var html = '';
+            for(var i=0;i<data.length;i++){
+                html += data[i] +'<br/>';
+            }
+            $users.html(html);
+
+        });
+
+        socket.on('history logs', function(data){
+            for(var i=0; i< data.length; i++){
+                messageDisplay(data[i]);
+            }
+        });
+
+        $form.submit(function(e){
+           e.preventDefault();
+
+            socket.emit('message', $messages.val());
+
+            $messages.val('');
+        });
+
+        socket.on('new message', function(data){
+           messageDisplay(data);
+        });
+        function messageDisplay(data){
+            $chat.append('<span class = "msg"><b>' + data.person + ': </b>' + data.msg + "</span><br/>");
+        }
+
+    });
+</script>
+
+
+</body>
+</html>
